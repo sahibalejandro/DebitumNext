@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "biome format --write",
+    "format": "biome format --write --no-errors-on-unmatched",
     "cypress:open": "cypress open"
   },
   "dependencies": {
