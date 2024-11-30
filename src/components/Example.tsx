@@ -1,5 +1,3 @@
 export default function Example() {
-  return (
-    <div>hello world</div>
-  );
+  return <div>hello world</div>;
 }
