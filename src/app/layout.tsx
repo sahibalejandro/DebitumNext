@@ -29,7 +29,7 @@ export default async function RootLayout({
               <UserMenu user={session?.user} />
             </div>
           </nav>
-          <main className="container mx-auto px-4">{children}</main>
+          <main className="container mx-auto p-4">{children}</main>
         </body>
       </UserProvider>
     </html>
