@@ -1,6 +1,11 @@
-describe('template spec', () => {
-  it('shows Hello World!', () => {
+describe('Home Page', () => {
+  it('shows welcome page', () => {
     cy.visit('/');
-    cy.get('main').contains('Hello World!');
+    cy.get('main').contains('Welcome!');
+  });
+
+  it('shows dashboard', () => {
+    cy.visit('/');
+    cy.get('main').contains('Dashboard!');
   });
 });

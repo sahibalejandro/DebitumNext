@@ -1,3 +1,3 @@
 export default async function Home() {
-  return <>Hello World!</>;
+  return <a href="/api/auth/login">Login</a>;
 }
