@@ -1,9 +1,10 @@
 import { NextRequest } from 'next/server';
 
-import { catchError } from '@/utils/error';
 import { ONE_WEEK } from '@/utils/constants';
 import UserAuthentication from '@/UserAuthentication';
+import type AccessTokenError from '@/AccessTokenError';
 import AuthCallbackResponse from '@/AuthCallbackResponse';
+import { catchError, getErrorMessage } from '@/utils/error';
 import {
   getUserInfo,
   getAccessToken,
@@ -11,15 +12,19 @@ import {
 } from '@/utils/auth';
 
 export async function GET(request: NextRequest) {
-  // --------------------------------------------------------------------------
-  // In this section we validate the current request contains all the necessary
-  // information to proceed with the Access Token exchange.
+  /*
+   * ---------------------------------------------------------------------------
+   * Validate Request
+   * ---------------------------------------------------------------------------
+   *
+   * In this section we validate the current request contains all the
+   * necessary information to proceed with the Access Token exchange.
+   */
   const url = new URL(request.url);
 
   if (url.searchParams.has('error')) {
     return new AuthCallbackResponse(
-      'Authentication from OAuth2 Service returned the followgin error: ' +
-        url.searchParams.get('error'),
+      'OAuth2 error: ' + url.searchParams.get('error'),
       { status: 401 },
     );
   }
@@ -28,22 +33,38 @@ export async function GET(request: NextRequest) {
     return new AuthCallbackResponse('OAuth2 Code is missing.', { status: 400 });
   }
 
+  /*
+   * ---------------------------------------------------------------------------
+   * For Testing
+   * ---------------------------------------------------------------------------
+   *
+   * When running E2E tests we have to check that the CSRF token can be
+   * validated, we achieve this by setting the "test" flag on the
+   * request, when this flag is resent and the CSRF is valid we
+   * return a special response to indicate this tests passed.
+   */
   if (!requestHasValidCSRFToken(request)) {
     return new AuthCallbackResponse('Invalid CSRF Token.', { status: 400 });
+  } else if (url.searchParams.has('test')) {
+    return new AuthCallbackResponse('CSRF Token is valid.');
   }
 
-  // --------------------------------------------------------------------------
-  // In this section we try to exchange the given Code for an Access Token.
-  // This is necessary to access the User Info within the Access Token.
+  /*
+   * ---------------------------------------------------------------------------
+   * Exchange Code for Access token
+   * ---------------------------------------------------------------------------
+   *
+   * In this section we try to exchange the given Code for an Access Token.
+   * This is necessary to access the User Info within the Access Token.
+   */
   const [accessTokenError, accessToken] = await catchError(
     getAccessToken(url.searchParams.get('code')!),
   );
 
   if (accessTokenError) {
-    // TODO:
-    // Status code should be the same as the one returned in the response within
-    // getAccessToken, or 500 if it's not available.
-    return new AuthCallbackResponse(accessTokenError.message, { status: 400 });
+    return new AuthCallbackResponse(getErrorMessage(accessTokenError), {
+      status: (accessTokenError as AccessTokenError).statusCode ?? 500,
+    });
   }
 
   if (!accessToken?.id_token) {
@@ -53,10 +74,15 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // --------------------------------------------------------------------------
-  // In this section we extract the User Info from the ID Token that comes
-  // within the Access Token, the User Info is used to create the user
-  // in DB (if not created yet) and start the user session.
+  /*
+   * ---------------------------------------------------------------------------
+   * Extract user data from the Token ID
+   * ---------------------------------------------------------------------------
+   *
+   * In this section we extract the User Info from the ID Token that comes
+   * within the Access Token, the User Info is used to create the user
+   * in DB (if not created yet) and start the user session.
+   */
   const userInfo = getUserInfo(accessToken.id_token);
 
   if (!userInfo) {
@@ -65,6 +91,15 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  /*
+   * ---------------------------------------------------------------------------
+   * Register user and create session
+   * ---------------------------------------------------------------------------
+   *
+   * Register the user (create if not exists) and start the session. The session
+   * ID is attached to the response as a cookie so we can authenticate the
+   * user back again in future requests.
+   */
   const [authError, auth] = await catchError(
     UserAuthentication.register(userInfo),
   );

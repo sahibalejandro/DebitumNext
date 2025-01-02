@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import AccessTokenError from '@/AccessTokenError';
 import { catchError, getErrorMessage } from './error';
 import { OAuth2TokenExchangeResponse, OAuth2UserInfo } from '@/types';
 
-const OAUTH_CSRF_TOKEN_COOKIE = 'debitum_oauth_csrf_token';
+export const AUTH_CSRF_TOKEN_COOKIE_NAME = 'auth_csrf_token';
+
 const REDIRECT_URI = `${process.env.APP_URL}/api/auth/callback`;
 
 export function generateCSRFToken() {
@@ -15,21 +17,21 @@ export function addCSRFTokenCookieToResponse(
   csrfToken: string,
 ) {
   res.cookies.set({
-    name: OAUTH_CSRF_TOKEN_COOKIE,
-    value: csrfToken,
     httpOnly: true,
+    value: csrfToken,
+    name: AUTH_CSRF_TOKEN_COOKIE_NAME,
   });
 }
 
 export function requestHasValidCSRFToken(req: NextRequest) {
   return (
     new URL(req.url).searchParams.get('state') ===
-    req.cookies.get(OAUTH_CSRF_TOKEN_COOKIE)?.value
+    req.cookies.get(AUTH_CSRF_TOKEN_COOKIE_NAME)?.value
   );
 }
 
 export function deleteCSRFTokenCookieFromResponse(res: NextResponse) {
-  res.cookies.delete(OAUTH_CSRF_TOKEN_COOKIE);
+  res.cookies.delete(AUTH_CSRF_TOKEN_COOKIE_NAME);
 }
 
 export function generateOAuthURL(csrfToken: string) {
@@ -68,11 +70,11 @@ export async function getAccessToken(
       if (response.ok) {
         resolve(data);
       } else {
-        reject(
-          new Error(
-            `Error from OAuth2 service: ${data.error_description ?? 'Unknow error while getting access token.'}`,
-          ),
+        const error = new AccessTokenError(
+          `Error from OAuth2 service: ${data.error_description ?? 'Unknow error while getting access token.'}`,
         );
+        error.statusCode = response.status;
+        reject(error);
       }
     } else {
       reject(
