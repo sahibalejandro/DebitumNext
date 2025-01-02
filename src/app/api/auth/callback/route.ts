@@ -1,19 +1,14 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
 import { catchError } from '@/utils/error';
+import { ONE_WEEK } from '@/utils/constants';
+import UserAuthentication from '@/UserAuthentication';
+import AuthCallbackResponse from '@/AuthCallbackResponse';
 import {
   getUserInfo,
   getAccessToken,
   requestHasValidCSRFToken,
-  deleteCSRFTokenCookieFromResponse,
 } from '@/utils/auth';
-
-function makeResponse(body: string, status: number) {
-  const response = new NextResponse(body, { status });
-  deleteCSRFTokenCookieFromResponse(response);
-
-  return response;
-}
 
 export async function GET(request: NextRequest) {
   // --------------------------------------------------------------------------
@@ -22,47 +17,80 @@ export async function GET(request: NextRequest) {
   const url = new URL(request.url);
 
   if (url.searchParams.has('error')) {
-    return makeResponse(
+    return new AuthCallbackResponse(
       'Authentication from OAuth2 Service returned the followgin error: ' +
         url.searchParams.get('error'),
-      401,
+      { status: 401 },
     );
   }
 
   if (!url.searchParams.has('code')) {
-    return makeResponse('OAuth2 Code is missing.', 400);
+    return new AuthCallbackResponse('OAuth2 Code is missing.', { status: 400 });
   }
 
   if (!requestHasValidCSRFToken(request)) {
-    return makeResponse('Invalid CSRF Token.', 400);
+    return new AuthCallbackResponse('Invalid CSRF Token.', { status: 400 });
   }
 
   // --------------------------------------------------------------------------
   // In this section we try to exchange the given Code for an Access Token.
   // This is necessary to access the User Info within the Access Token.
-
   const [accessTokenError, accessToken] = await catchError(
     getAccessToken(url.searchParams.get('code')!),
   );
 
   if (accessTokenError) {
-    return makeResponse(accessTokenError.message, 401);
+    // TODO:
+    // Status code should be the same as the one returned in the response within
+    // getAccessToken, or 500 if it's not available.
+    return new AuthCallbackResponse(accessTokenError.message, { status: 400 });
   }
 
   if (!accessToken?.id_token) {
-    return makeResponse(`OAuth2 Service did not provide an access token.`, 401);
+    return new AuthCallbackResponse(
+      `OAuth2 Service did not provide an access token.`,
+      { status: 400 },
+    );
   }
 
   // --------------------------------------------------------------------------
   // In this section we extract the User Info from the ID Token that comes
   // within the Access Token, the User Info is used to create the user
   // in DB (if not created yet) and start the user session.
-
   const userInfo = getUserInfo(accessToken.id_token);
 
   if (!userInfo) {
-    return makeResponse('Failed to get user info.', 401);
+    return new AuthCallbackResponse('Failed to get user info.', {
+      status: 500,
+    });
   }
 
-  return makeResponse(`Welcome ${userInfo.name}!`, 200);
+  const [authError, auth] = await catchError(
+    UserAuthentication.register(userInfo),
+  );
+
+  if (authError) {
+    return new AuthCallbackResponse(`Failed to register user.`, {
+      status: 500,
+    });
+  }
+
+  const [sessionError, session] = await catchError(auth.createSession());
+
+  if (sessionError) {
+    return new AuthCallbackResponse(`Failed to create session.`, {
+      status: 500,
+    });
+  }
+
+  const response = new AuthCallbackResponse(`Welcome ${userInfo.name}!`, {
+    status: 200,
+  });
+
+  response.cookies.set('session_id', session.session_id, {
+    httpOnly: true,
+    maxAge: ONE_WEEK / 1000,
+  });
+
+  return response;
 }
