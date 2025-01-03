@@ -1,11 +1,9 @@
 import crypto from 'node:crypto';
 import type { User, Session } from '@prisma/client';
-import { PrismaClient } from '@prisma/client';
 
+import prisma from '@/PrismaClient';
 import { OAuth2UserInfo } from './types';
 import { catchError, getErrorMessage } from './utils/error';
-
-const prisma = new PrismaClient();
 
 export default class UserAuthentication {
   private user: User;

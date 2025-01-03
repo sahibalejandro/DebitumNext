@@ -1,7 +1,7 @@
-import type { Claims } from '@auth0/nextjs-auth0';
+import type Session from '@/Session';
 
 type Props = React.ComponentProps<'div'> & {
-  user?: Claims;
+  user?: Session['user'];
 };
 
 export default function UserMenu({ user, ...intrinsicAttributes }: Props) {
@@ -12,12 +12,19 @@ export default function UserMenu({ user, ...intrinsicAttributes }: Props) {
           Login
         </a>
       ) : (
-        <>
-          <span data-testid="user-name">{user.name}</span> -{' '}
+        <div className="flex items-center gap-4">
+          <img
+            src={user.picture}
+            className="rounded-full"
+            width="32"
+            height="32"
+            alt="User Picture"
+          />
+          <span data-testid="user-name">{user.name}</span>
           <a href="/api/auth/logout" data-testid="link-logout">
             Logout
           </a>
-        </>
+        </div>
       )}
     </div>
   );

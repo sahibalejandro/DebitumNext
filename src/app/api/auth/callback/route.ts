@@ -1,10 +1,10 @@
 import { NextRequest } from 'next/server';
 
-import { ONE_WEEK } from '@/utils/constants';
 import UserAuthentication from '@/UserAuthentication';
 import type AccessTokenError from '@/AccessTokenError';
 import AuthCallbackResponse from '@/AuthCallbackResponse';
 import { catchError, getErrorMessage } from '@/utils/error';
+import { ONE_WEEK, SESSION_ID_COOKIE_NAME } from '@/utils/constants';
 import {
   getUserInfo,
   getAccessToken,
@@ -118,11 +118,23 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const response = new AuthCallbackResponse(`Welcome ${userInfo.name}!`, {
-    status: 200,
+  /*
+   *
+   * ---------------------------------------------------------------------------
+   * Redirect to Home Page
+   * ---------------------------------------------------------------------------
+   *
+   * This response will redirect the user to the home page, additionally it
+   * sets the session_id cookie.
+   */
+  const response = new AuthCallbackResponse(null, {
+    status: 303,
+    headers: {
+      Location: '/',
+    },
   });
 
-  response.cookies.set('session_id', session.session_id, {
+  response.cookies.set(SESSION_ID_COOKIE_NAME, session.session_id, {
     httpOnly: true,
     maxAge: ONE_WEEK / 1000,
   });
