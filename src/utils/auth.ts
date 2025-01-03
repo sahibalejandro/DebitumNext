@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import AccessTokenError from '@/AccessTokenError';
 import { catchError, getErrorMessage } from './error';
+import { AUTH_CSRF_TOKEN_COOKIE_NAME } from './constants';
 import { OAuth2TokenExchangeResponse, OAuth2UserInfo } from '@/types';
-
-export const AUTH_CSRF_TOKEN_COOKIE_NAME = 'auth_csrf_token';
 
 const REDIRECT_URI = `${process.env.APP_URL}/api/auth/callback`;
 

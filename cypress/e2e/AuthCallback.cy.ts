@@ -1,4 +1,4 @@
-import { AUTH_CSRF_TOKEN_COOKIE_NAME } from '@/utils/auth';
+import { AUTH_CSRF_TOKEN_COOKIE_NAME } from '@/utils/constants';
 
 describe('Auth Callback', () => {
   it('shows OAuth2 authentication error', () => {
