@@ -6,6 +6,7 @@ import { SESSION_ID_COOKIE_NAME } from './utils/constants';
 import { catchError, getErrorMessage } from './utils/error';
 
 export default class Session {
+  id: string;
   user: Pick<User, 'name' | 'picture'>;
 
   static async get(): Promise<Session | null> {
@@ -36,10 +37,11 @@ export default class Session {
       return null;
     }
 
-    return new this(session.user);
+    return new this(sessionId, session.user);
   }
 
-  constructor(user: Session['user']) {
+  constructor(id: string, user: Session['user']) {
+    this.id = id;
     this.user = user;
   }
 }
