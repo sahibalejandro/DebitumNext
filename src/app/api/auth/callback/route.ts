@@ -33,6 +33,10 @@ export async function GET(request: NextRequest) {
     return new AuthCallbackResponse('OAuth2 Code is missing.', { status: 400 });
   }
 
+  if (!requestHasValidCSRFToken(request)) {
+    return new AuthCallbackResponse('Invalid CSRF Token.', { status: 400 });
+  }
+
   /*
    * ---------------------------------------------------------------------------
    * For Testing
@@ -43,9 +47,7 @@ export async function GET(request: NextRequest) {
    * request, when this flag is resent and the CSRF is valid we
    * return a special response to indicate this tests passed.
    */
-  if (!requestHasValidCSRFToken(request)) {
-    return new AuthCallbackResponse('Invalid CSRF Token.', { status: 400 });
-  } else if (url.searchParams.has('test')) {
+  if (url.searchParams.has('test')) {
     return new AuthCallbackResponse('CSRF Token is valid.');
   }
 
@@ -134,7 +136,7 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  response.cookies.set(SESSION_ID_COOKIE_NAME, session.session_id, {
+  response.cookies.set(SESSION_ID_COOKIE_NAME, session.sessionId, {
     httpOnly: true,
     maxAge: ONE_WEEK / 1000,
   });

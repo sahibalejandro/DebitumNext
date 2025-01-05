@@ -1,7 +1,8 @@
+import crypto from 'node:crypto';
 import { User } from '@prisma/client';
 import { cookies } from 'next/headers';
 
-import prisma from '@/PrismaClient';
+import prisma from './PrismaClient';
 import { SESSION_ID_COOKIE_NAME } from './utils/constants';
 import { catchError, getErrorMessage } from './utils/error';
 
@@ -19,7 +20,7 @@ export default class Session {
     const [sessionError, session] = await catchError(
       prisma.session.findUnique({
         include: { user: { select: { name: true, picture: true } } },
-        where: { session_id: sessionId },
+        where: { sessionId },
       }),
     );
 
@@ -38,6 +39,10 @@ export default class Session {
     }
 
     return new this(sessionId, session.user);
+  }
+
+  static createSessionId() {
+    return crypto.randomBytes(32).toString('hex');
   }
 
   constructor(id: string, user: Session['user']) {

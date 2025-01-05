@@ -13,7 +13,7 @@ export async function GET() {
     const [deleteSessionError] = await catchError(
       prisma.session.delete({
         where: {
-          session_id: session.id,
+          sessionId: session.id,
         },
       }),
     );

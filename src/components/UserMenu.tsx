@@ -6,9 +6,9 @@ type Props = React.ComponentProps<'div'> & {
 
 export default function UserMenu({ user, ...intrinsicAttributes }: Props) {
   return (
-    <div {...intrinsicAttributes}>
+    <div {...intrinsicAttributes} data-testid="UserMenu">
       {!user ? (
-        <a href="/api/auth/login" data-testid="link-login">
+        <a href="/api/auth/login" data-testid="login-link">
           Login
         </a>
       ) : (
@@ -21,7 +21,7 @@ export default function UserMenu({ user, ...intrinsicAttributes }: Props) {
             alt="User Picture"
           />
           <span data-testid="user-name">{user.name}</span>
-          <a href="/api/auth/logout" data-testid="link-logout">
+          <a href="/api/auth/logout" data-testid="logout-link">
             Logout
           </a>
         </div>

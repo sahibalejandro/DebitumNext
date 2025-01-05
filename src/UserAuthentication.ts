@@ -1,6 +1,6 @@
-import crypto from 'node:crypto';
-import type { User, Session } from '@prisma/client';
+import type { User, Session as SessionModel } from '@prisma/client';
 
+import Session from './Session';
 import prisma from '@/PrismaClient';
 import { OAuth2UserInfo } from './types';
 import { catchError, getErrorMessage } from './utils/error';
@@ -41,16 +41,12 @@ export default class UserAuthentication {
     return new this(user);
   }
 
-  private createSessionId() {
-    return crypto.randomBytes(32).toString('hex');
-  }
-
-  async createSession(): Promise<Pick<Session, 'session_id'>> {
+  async createSession(): Promise<Pick<SessionModel, 'sessionId'>> {
     const [error, session] = await catchError(
       prisma.session.create({
         data: {
-          user_id: this.user.id,
-          session_id: this.createSessionId(),
+          userId: this.user.id,
+          sessionId: Session.createSessionId(),
         },
       }),
     );

@@ -18,22 +18,26 @@ model User {
   createdAt DateTime @default(now())
 
   sessions Session[]
+  payments Payment[]
 }
 
 model Session {
   id Int @id @default(autoincrement())
-  session_id String @unique
-  user User? @relation(fields: [user_id], references: [id])
-  user_id Int
+  sessionId String @unique
+  userId Int
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Payment {
   id Int @id @default(autoincrement())
   name String
   amount Int
-  userId String
+  userId Int
   paid Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   slugId String @unique @default(uuid())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

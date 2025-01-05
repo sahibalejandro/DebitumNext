@@ -1,3 +1,11 @@
+import Session from '@/Session';
+
 export default async function Home() {
-  return <a href="/api/auth/login">Login</a>;
+  const session = await Session.get();
+
+  if (!session) {
+    return 'Welcome!';
+  }
+
+  return 'Dashboard!';
 }
