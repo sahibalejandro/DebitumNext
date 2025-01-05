@@ -1,4 +1,5 @@
 import Session from '@/Session';
+import Dashboard from '@/components/Dashboard';
 
 export default async function Home() {
   const session = await Session.get();
@@ -7,5 +8,5 @@ export default async function Home() {
     return 'Welcome!';
   }
 
-  return 'Dashboard!';
+  return <Dashboard />;
 }

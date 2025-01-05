@@ -19,10 +19,15 @@ Cypress.Commands.add('login', () => {
   });
 });
 
+Cypress.Commands.add('byTestId', (testId: string) => {
+  cy.get(`[data-testid="${testId}"]`);
+});
+
 declare global {
   namespace Cypress {
     interface Chainable {
       login(): Chainable<void>;
+      byTestId(testId: string): Chainable<void>;
     }
   }
 }
