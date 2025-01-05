@@ -15,8 +15,8 @@ describe('Logout', () => {
 
     cy.getCookie(SESSION_ID_COOKIE_NAME).should('exist');
 
-    cy.get('[data-testid="UserMenu"]')
-      .get('[data-testid="logout-link"]')
+    cy.get('[data-testid="user-menu"]')
+      .get('[data-testid="link-logout"]')
       .click();
 
     cy.getCookie(SESSION_ID_COOKIE_NAME).should('not.exist');
