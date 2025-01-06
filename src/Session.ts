@@ -8,7 +8,7 @@ import { catchError, getErrorMessage } from './utils/error';
 
 export default class Session {
   id: string;
-  user: Pick<User, 'name' | 'picture'>;
+  user: Pick<User, 'id' | 'name' | 'picture'>;
 
   static async get(): Promise<Session | null> {
     const sessionId = cookies().get(SESSION_ID_COOKIE_NAME)?.value;
@@ -19,7 +19,7 @@ export default class Session {
 
     const [sessionError, session] = await catchError(
       prisma.session.findUnique({
-        include: { user: { select: { name: true, picture: true } } },
+        include: { user: { select: { id: true, name: true, picture: true } } },
         where: { sessionId },
       }),
     );
