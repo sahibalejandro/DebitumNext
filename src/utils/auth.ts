@@ -1,6 +1,5 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import type { NextRequest, NextResponse } from 'next/server';
 
-import Session from '@/Session';
 import AccessTokenError from '@/AccessTokenError';
 import { catchError, getErrorMessage } from './error';
 import { AUTH_CSRF_TOKEN_COOKIE_NAME } from './constants';
@@ -100,22 +99,4 @@ export function getUserInfo(tokenId: string): OAuth2UserInfo | undefined {
       `Failed to get user info from token ID: ${getErrorMessage(e)}`,
     );
   }
-}
-
-export async function onlyAuthenticated(
-  request: NextRequest,
-  fn: (
-    request: NextRequest,
-    session: Session,
-  ) => Promise<NextResponse> | NextResponse,
-) {
-  const session = await Session.get();
-
-  if (!session) {
-    const response = new NextResponse('Unauthorized', { status: 401 });
-    deleteCSRFTokenCookieFromResponse(response);
-    return response;
-  }
-
-  return fn(request, session);
 }
