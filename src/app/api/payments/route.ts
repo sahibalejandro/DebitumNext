@@ -2,18 +2,29 @@ import { NextResponse } from 'next/server';
 
 import prisma from '@/PrismaClient';
 import authMiddleware from '@/middlewares/auth';
+import { getErrorMessage } from '@/utils/error';
+import { formDataToObject } from '@/utils/formData';
+import PaymentSchema from '@/validation/schemas/PaymentSchema';
 
 export const POST = authMiddleware(async (request, session) => {
-  // TODO:
-  // Validate and format input data before saving into database.
-  const formData = await request.formData();
-  const payment = await prisma.payment.create({
-    data: {
-      name: formData.get('name') ?? 'No name',
-      amount: parseInt(formData.get('amount')) ?? 0,
-      userId: session.user.id,
-    },
-  });
+  const paymentData = formDataToObject(await request.formData());
+  const parsedPayment = PaymentSchema.safeParse(paymentData);
 
-  return NextResponse.json(payment);
+  if (parsedPayment.error) {
+    return NextResponse.json(parsedPayment.error, { status: 400 });
+  }
+
+  try {
+    const payment = await prisma.payment.create({
+      data: {
+        name: parsedPayment.data?.name!,
+        amount: parsedPayment.data?.amount!,
+        userId: session.user.id,
+      },
+    });
+
+    return NextResponse.json(payment);
+  } catch (e) {
+    return new NextResponse(getErrorMessage(e), { status: 500 });
+  }
 });

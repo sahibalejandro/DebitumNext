@@ -18,6 +18,10 @@ async function savePayment(paymentData: FormData): Promise<Payment | null> {
     return null;
   }
 
+  // TODO:
+  // Handle 4XX or 5XX response statuses before reading the
+  // JSON response.
+
   const [jsonError, payment] = await catchError<Payment>(response.json());
 
   if (jsonError) {
@@ -46,10 +50,10 @@ export default function PaymentForm() {
     <form onSubmit={handleSubmit}>
       <input type="text" name="name" data-testid="input-payment-name" />
       <input
-        type="number"
-        name="amount"
-        step="0.01"
         min="0"
+        step="0.01"
+        name="amount"
+        type="number"
         data-testid="input-payment-amount"
       />
       <button type="submit" data-testid="button-payment-save" disabled={saving}>
