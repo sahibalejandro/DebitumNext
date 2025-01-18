@@ -21,3 +21,7 @@ export function getErrorMessage(error: unknown): string {
 
   return 'getErrorMessage: Unknown error';
 }
+
+export function defaultErrorHandler(...messages: string[]): void {
+  console.error(...messages);
+}

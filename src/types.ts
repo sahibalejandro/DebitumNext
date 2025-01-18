@@ -7,3 +7,5 @@ export type OAuth2UserInfo = {
   email: string;
   picture: string;
 };
+
+export type ErrorHandler = (...messages: string[]) => void;

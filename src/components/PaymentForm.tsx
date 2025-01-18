@@ -1,48 +1,26 @@
 'use client';
 import { useState } from 'react';
-import type { Payment } from '@prisma/client';
+import { useRouter } from 'next/navigation';
 
-import { catchError, getErrorMessage } from '@/utils/error';
-
-async function savePayment(paymentData: FormData): Promise<Payment | null> {
-  const [error, response] = await catchError(
-    fetch('/api/payments', {
-      method: 'POST',
-      body: paymentData,
-    }),
-  );
-
-  if (error) {
-    console.error(`Failed to save payment.`, getErrorMessage(error));
-
-    return null;
-  }
-
-  // TODO:
-  // Handle 4XX or 5XX response statuses before reading the
-  // JSON response.
-
-  const [jsonError, payment] = await catchError<Payment>(response.json());
-
-  if (jsonError) {
-    console.error(
-      `Failed to read JSON after saving payment.`,
-      getErrorMessage(jsonError),
-    );
-
-    return null;
-  }
-
-  return payment;
-}
+import { savePayment } from '@/api/payments';
 
 export default function PaymentForm() {
+  const router = useRouter();
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setSaving(true);
-    await savePayment(new FormData(e.target as HTMLFormElement));
+    // TODO:
+    // Validate if jsonData contains Zod errors.
+    const jsonData = await savePayment(
+      new FormData(e.target as HTMLFormElement),
+    );
+
+    if (jsonData?.slugId) {
+      return router.push(`/payments/${jsonData.slugId}`);
+    }
+
     setSaving(false);
   }
 
