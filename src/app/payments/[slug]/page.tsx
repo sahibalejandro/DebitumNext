@@ -1,8 +1,10 @@
 import { applyMiddlewares } from '@/middleware';
-import { authPageMiddleware } from '@/middleware/auth';
+import { userOwnsPayment } from '@/middleware/ownership';
+import { authenticationRequired } from '@/middleware/auth';
 
-export default applyMiddlewares<Record<string, unknown>, JSX.Element | void>(
-  authPageMiddleware,
+export default applyMiddlewares(
+  authenticationRequired,
+  userOwnsPayment,
   async () => {
     return (
       <>

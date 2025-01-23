@@ -5,13 +5,15 @@ import prisma from '@/PrismaClient';
 import { applyMiddlewares } from '@/middleware';
 import { getErrorMessage } from '@/utils/error';
 import { formDataToObject } from '@/utils/formData';
-import { authRouteMiddleware } from '@/middleware/auth';
+import { authenticationRequired } from '@/middleware/auth';
 import PaymentSchema from '@/validation/schemas/PaymentSchema';
 
-export const POST = applyMiddlewares<NextRequest, NextResponse>(
-  authRouteMiddleware,
-  async (request, requestContext) => {
-    const paymentData = formDataToObject(await request.formData());
+export const POST = applyMiddlewares(
+  authenticationRequired,
+  async (request, _nextContext, requestContext) => {
+    const paymentData = formDataToObject(
+      await (request as NextRequest).formData(),
+    );
     const parsedPayment = PaymentSchema.safeParse(paymentData);
 
     if (parsedPayment.error) {
